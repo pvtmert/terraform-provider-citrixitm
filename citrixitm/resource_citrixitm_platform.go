@@ -5,9 +5,12 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/tolgaakyuz/citrix-go/itm"
+
+	backoff "github.com/cenkalti/backoff/v4"
 )
 
 func resourceCitrixITMPlatform() *schema.Resource {
@@ -20,6 +23,11 @@ func resourceCitrixITMPlatform() *schema.Resource {
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
+			},
+			"alias": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  "",
 			},
 			"description": {
 				Type:     schema.TypeString,
@@ -74,6 +82,7 @@ func resourceCitrixITMPlatform() *schema.Resource {
 }
 
 func resourceCitrixITMPlatformCreate(d *schema.ResourceData, m interface{}) error {
+	var err error
 	client := m.(*itm.Client)
 	log.Println("[INFO][PLATFORM][CREATE] Start")
 
@@ -86,7 +95,12 @@ func resourceCitrixITMPlatformCreate(d *schema.ResourceData, m interface{}) erro
 
 	log.Printf("[DEBUG][PLATFORM][CREATE] options:\n%+v", options)
 
-	platform, err := client.Platform.Create(options)
+	var platform *itm.Platform
+	err = backoff.Retry(func() error {
+		log.Printf("[INFO][PLATFORM][CREATE] Trying... time: %s\n", time.Now())
+		platform, err = client.Platform.Create(options)
+		return err
+	}, NewExponentialBackOff())
 	if err != nil {
 		log.Printf("[DEBUG][PLATFORM][CREATE] API error: %s", err)
 		return err
@@ -99,6 +113,7 @@ func resourceCitrixITMPlatformCreate(d *schema.ResourceData, m interface{}) erro
 }
 
 func resourceCitrixITMPlatformRead(d *schema.ResourceData, m interface{}) error {
+	var err error
 	client := m.(*itm.Client)
 	log.Printf("[INFO][PLATFORM][READ] Start")
 
@@ -107,7 +122,12 @@ func resourceCitrixITMPlatformRead(d *schema.ResourceData, m interface{}) error 
 		return fmt.Errorf("[ERROR][PLATFORM][READ] Converting app id (%s) to an integer: %s", d.Id(), err)
 	}
 
-	platform, err := client.Platform.Get(id)
+	var platform *itm.Platform
+	err = backoff.Retry(func() error {
+		log.Printf("[INFO][PLATFORM][READ] Trying... time: %s\n", time.Now())
+		platform, err = client.Platform.Get(id)
+		return err
+	}, NewExponentialBackOff())
 	if err != nil {
 		return fmt.Errorf("[ERROR][PLATFORM][READ] API Error for id: %s: %s", d.Id(), err)
 	}
@@ -118,6 +138,7 @@ func resourceCitrixITMPlatformRead(d *schema.ResourceData, m interface{}) error 
 }
 
 func resourceCitrixITMPlatformUpdate(d *schema.ResourceData, m interface{}) error {
+	var err error
 	client := m.(*itm.Client)
 	log.Printf("[INFO][PLATFORM][UPDATE] Start")
 
@@ -127,6 +148,7 @@ func resourceCitrixITMPlatformUpdate(d *schema.ResourceData, m interface{}) erro
 	}
 
 	if d.HasChange("name") ||
+		d.HasChange("alias") ||
 		d.HasChange("description") ||
 		d.HasChange("category") ||
 		d.HasChange("radar") {
@@ -138,7 +160,12 @@ func resourceCitrixITMPlatformUpdate(d *schema.ResourceData, m interface{}) erro
 
 		log.Printf("[DEBUG][PLATFORM][UPDATE] options:\n%#v", options)
 
-		platform, err := client.Platform.Update(id, options)
+		var platform *itm.Platform
+		err = backoff.Retry(func() error {
+			log.Printf("[INFO][PLATFORM][UPDATE] Trying... time: %s\n", time.Now())
+			platform, err = client.Platform.Update(id, options)
+			return err
+		}, NewExponentialBackOff())
 		if err != nil {
 			return fmt.Errorf("[WARN][PLATFORM][UPDATE] API error with ID %s: %s", d.Id(), err)
 		}
@@ -160,7 +187,10 @@ func resourceCitrixITMPlatformDelete(d *schema.ResourceData, m interface{}) erro
 		return fmt.Errorf("[ERROR][PLATFORM][DELETE] Converting app id (%s) to an integer: %s", d.Id(), err)
 	}
 
-	err = client.Platform.Delete(id)
+	err = backoff.Retry(func() error {
+		log.Printf("[INFO][PLATFORM][DELETE] Trying... time: %s\n", time.Now())
+		return client.Platform.Delete(id)
+	}, NewExponentialBackOff())
 	if err != nil {
 		return fmt.Errorf("[WARN][PLATFORM][DELETE] API error with ID %s: %s", d.Id(), err)
 	}
@@ -206,7 +236,12 @@ func prepareOptionsForPlatform(d *schema.ResourceData) (*itm.PlatformOpts, error
 	}
 
 	name := d.Get("name").(string)
-	alias := strings.ToLower(strings.ReplaceAll(name, " ", "_"))
+	alias := d.Get("alias").(string)
+
+	if alias == "" {
+		alias = strings.ToLower(strings.ReplaceAll(name, " ", "_"))
+	}
+
 	description := d.Get("description").(string)
 	enabled := d.Get("enabled").(bool)
 	openMixEnabled := d.Get("openmix_enabled").(bool)
@@ -223,6 +258,16 @@ func prepareOptionsForPlatform(d *schema.ResourceData) (*itm.PlatformOpts, error
 		IsPrivate:                 true,
 		PublicProviderArchetypeId: 0,
 	}, nil
+}
+
+func NewExponentialBackOff() *backoff.ExponentialBackOff {
+	exp := backoff.NewExponentialBackOff()
+	exp.InitialInterval = 1 * time.Second
+	exp.MaxElapsedTime = 20 * time.Second
+	exp.Multiplier = 2
+	exp.Reset()
+
+	return exp
 }
 
 // Flatteners
