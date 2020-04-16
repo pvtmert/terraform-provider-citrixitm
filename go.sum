@@ -290,7 +290,7 @@ github.com/tencentcloud/tencentcloud-sdk-go v3.0.82+incompatible/go.mod h1:0PfYo
 github.com/tencentyun/cos-go-sdk-v5 v0.0.0-20190808065407-f07404cefc8c/go.mod h1:wk2XFUg6egk4tSDNZtXeKfe2G6690UVyt163PuUxBZk=
 github.com/terraform-providers/terraform-provider-openstack v1.15.0/go.mod h1:2aQ6n/BtChAl1y2S60vebhyJyZXBsuAI5G4+lHrT1Ew=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20171017195756-830351dc03c6/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
-github.com/tolgaakyuz/citrix-go v1.0.0 h1:RFGJ05Ay/i49T0gaSJlgE3mwfz2eybpy3liNNnPLmOo=
+github.com/tolgaakyuz/citrix-go v1.0.0 h1:vqpzHCzKRmSjoscOBDbJyNjd6kIpXLMqO5gDM+9JcMs=
 github.com/tolgaakyuz/citrix-go v1.0.0/go.mod h1:L5TBRI2EGpLXCkPqZUs1e5q/NDwMtRt6PVNVygw7HIA=
 github.com/ugorji/go v0.0.0-20180813092308-00b869d2f4a5/go.mod h1:hnLbHMwcvSihnDhEfx2/BzKp2xb0Y+ErdfYcrs9tkJQ=
 github.com/ulikunitz/xz v0.5.5 h1:pFrO0lVpTBXLpYw+pnLj6TbvHuyjXMfjGeCwSqCVwok=
