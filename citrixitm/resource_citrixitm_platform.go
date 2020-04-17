@@ -66,6 +66,11 @@ func resourceCitrixITMPlatform() *schema.Resource {
 							Type:     schema.TypeString,
 							Required: true,
 						},
+						"https_enabled": {
+							Type:     schema.TypeBool,
+							Optional: true,
+							Default:  true,
+						},
 						"weight": {
 							Type:     schema.TypeInt,
 							Required: false,
@@ -277,6 +282,7 @@ func flattenPlatformRadar(radarOpt map[string]interface{}) map[string]interface{
 	m["probe_response_time_url"] = radarOpt["rttSecureUrl"]
 	m["probe_availability_url"] = radarOpt["primeSecureUrl"]
 	m["probe_throughput_url"] = radarOpt["xlSecureUrl"]
+	m["https_enabled"] = strconv.FormatBool(radarOpt["httpsEnabled"].(bool))
 	m["weight"] = fmt.Sprintf("%d", int(radarOpt["weight"].(float64)))
 	return m
 }
@@ -294,5 +300,12 @@ func expandPlatformRadar(state map[string]interface{}) (map[string]interface{}, 
 		return nil, fmt.Errorf("[ERROR][PLATFORM][EXPAND] Converting id (%s) to an integer: %s", state["weight"], err)
 	}
 	m["weight"] = weight
+
+	https_enabled, err := strconv.ParseBool(state["https_enabled"].(string))
+	if err != nil {
+		return nil, fmt.Errorf("[ERROR][PLATFORM][EXPAND] Converting radarOpt (%s): %s", state["https_enabled"], err)
+	}
+	m["httpsEnabled"] = https_enabled
+
 	return m, nil
 }
