@@ -5,9 +5,12 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/tolgaakyuz/citrix-go/itm"
+
+	backoff "github.com/cenkalti/backoff/v4"
 )
 
 func resourceCitrixITMDnsApp() *schema.Resource {
@@ -67,6 +70,7 @@ func resourceCitrixITMDnsApp() *schema.Resource {
 }
 
 func resourceCitrixITMDnsAppCreate(d *schema.ResourceData, m interface{}) error {
+	var err error
 	client := m.(*itm.Client)
 	log.Println("[INFO][DNS_APP][CREATE] Start")
 
@@ -78,7 +82,12 @@ func resourceCitrixITMDnsAppCreate(d *schema.ResourceData, m interface{}) error 
 
 	log.Printf("[DEBUG][DNS_APP][CREATE] options:\n%+v", options)
 
-	app, err := client.DNSApps.Create(options, true)
+	var app *itm.DNSApp
+	err = backoff.Retry(func() error {
+		log.Printf("[INFO][DNS_APP][CREATE] Trying... time: %s\n", time.Now())
+		app, err = client.DNSApps.Create(options, true)
+		return err
+	}, NewExponentialBackOff())
 	if err != nil {
 		log.Printf("[DEBUG][DNS_APP][CREATE] API error: %s", err)
 		return err
@@ -91,6 +100,7 @@ func resourceCitrixITMDnsAppCreate(d *schema.ResourceData, m interface{}) error 
 }
 
 func resourceCitrixITMDnsAppRead(d *schema.ResourceData, m interface{}) error {
+	var err error
 	client := m.(*itm.Client)
 	log.Printf("[INFO][DNS_APP][READ] Start")
 
@@ -99,7 +109,12 @@ func resourceCitrixITMDnsAppRead(d *schema.ResourceData, m interface{}) error {
 		return fmt.Errorf("[ERROR][DNS_APP][READ] Converting app id (%s) to an integer: %s", d.Id(), err)
 	}
 
-	app, err := client.DNSApps.Get(id)
+	var app *itm.DNSApp
+	err = backoff.Retry(func() error {
+		log.Printf("[INFO][DNS_APP][READ] Trying... time: %s\n", time.Now())
+		app, err = client.DNSApps.Get(id)
+		return err
+	}, NewExponentialBackOff())
 	if err != nil {
 		return fmt.Errorf("[ERROR][DNS_APP][READ] API Error for id: %s: %s", d.Id(), err)
 	}
@@ -110,6 +125,7 @@ func resourceCitrixITMDnsAppRead(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceCitrixITMDnsAppUpdate(d *schema.ResourceData, m interface{}) error {
+	var err error
 	client := m.(*itm.Client)
 	log.Printf("[INFO][DNS_APP][UPDATE] Start")
 
@@ -132,7 +148,12 @@ func resourceCitrixITMDnsAppUpdate(d *schema.ResourceData, m interface{}) error 
 
 		log.Printf("[DEBUG][DNS_APP][UPDATE] options:\n%#v", options)
 
-		app, err := client.DNSApps.Update(id, options, true)
+		var app *itm.DNSApp
+		err = backoff.Retry(func() error {
+			log.Printf("[INFO][DNS_APP][UPDATE] Trying... time: %s\n", time.Now())
+			app, err = client.DNSApps.Update(id, options, true)
+			return err
+		}, NewExponentialBackOff())
 		if err != nil {
 			return fmt.Errorf("[WARN][DNS_APP][UPDATE] API error with ID %s: %s", d.Id(), err)
 		}
@@ -154,7 +175,10 @@ func resourceCitrixITMDnsAppDelete(d *schema.ResourceData, m interface{}) error 
 		return fmt.Errorf("[ERROR][DNS_APP][DELETE] Converting app id (%s) to an integer: %s", d.Id(), err)
 	}
 
-	err = client.DNSApps.Delete(id)
+	err = backoff.Retry(func() error {
+		log.Printf("[INFO][DNS_APP][DELETE] Trying... time: %s\n", time.Now())
+		return client.DNSApps.Delete(id)
+	}, NewExponentialBackOff())
 	if err != nil {
 		return fmt.Errorf("[WARN][DNS_APP][DELETE] API error with ID %s: %s", d.Id(), err)
 	}
