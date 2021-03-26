@@ -4,7 +4,7 @@ import (
 	"github.com/hashicorp/terraform/plugin"
 	"github.com/hashicorp/terraform/terraform"
 
-	"github.com/tolgaakyuz/terraform-provider-citrixitm/citrixitm"
+	"github.com/pvtmert/terraform-provider-citrixitm/citrixitm"
 )
 
 func main() {
