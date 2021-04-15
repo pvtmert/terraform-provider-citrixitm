@@ -1,4 +1,4 @@
-module github.com/pvtmert/terraform-provider-citrixitm
+module github.com/mubi/terraform-provider-citrixitm
 
 go 1.13
 
