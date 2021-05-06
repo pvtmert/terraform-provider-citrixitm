@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/url"
 
-	"github.com/tolgaakyuz/citrix-go/itm"
+	"github.com/mubi/citrix-go/itm"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
 )
