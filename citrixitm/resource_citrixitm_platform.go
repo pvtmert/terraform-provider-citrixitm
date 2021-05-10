@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/tolgaakyuz/citrix-go/itm"
+	"github.com/mubi/citrix-go/itm"
 
 	backoff "github.com/cenkalti/backoff/v4"
 )
